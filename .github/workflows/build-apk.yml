@@ -15,11 +15,21 @@ jobs:
 
       - name: Unzip project
         run: |
-          unzip -o JarvisAndroid.zip
+          # Repodaki ilk .zip dosyasını otomatik bul (JarvisAndroid.zip,
+          # JarvisAndroid_fixed.zip vs. fark etmez — dosya adını sabitlemedik).
+          ZIP_FILE=$(find . -maxdepth 1 -name "*.zip" | head -n 1)
+          if [ -z "$ZIP_FILE" ]; then
+            echo "HATA: repo kökünde .zip dosyası bulunamadı"
+            exit 1
+          fi
+          echo "Kullanılan zip: $ZIP_FILE"
+          unzip -o "$ZIP_FILE"
+
           if [ -d JarvisAndroid ]; then
             cp -r JarvisAndroid/* .
-            cp -r JarvisAndroid/.* . 2>/dev/null || true
+            cp -r JarvisAndroid/.[!.]* . 2>/dev/null || true
           fi
+
           ls -la
           test -f settings.gradle.kts && echo "OK settings" || (echo "HATA settings yok" && exit 1)
           test -f app/build.gradle.kts && echo "OK app/build" || (echo "HATA app/build yok" && exit 1)
@@ -43,22 +53,25 @@ jobs:
           export PATH=$PATH:$SDK_ROOT/cmdline-tools/latest/bin:$SDK_ROOT/platform-tools
           yes | sdkmanager --sdk_root=$SDK_ROOT --licenses >/dev/null || true
           sdkmanager --sdk_root=$SDK_ROOT "platform-tools" "platforms;android-35" "build-tools;35.0.0"
-          
-          # Tek yol kullan
+
           echo "ANDROID_HOME=$SDK_ROOT" >> $GITHUB_ENV
           echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> $GITHUB_ENV
           echo "$SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$SDK_ROOT/platform-tools" >> $GITHUB_PATH
-          
+
           # local.properties oluştur (Gradle bunu kullanır)
-          echo "sdk.dir=$SDK_ROOT" > local.properties
-          cat local.properties
+          # NOT: bu github.workspace kökünde oluşuyor; Unzip project adımı
+          # dosyaları zaten kök dizine kopyaladığı için burası doğru yer.
+          echo "sdk.dir=$SDK_ROOT" > $GITHUB_WORKSPACE/local.properties
+          cat $GITHUB_WORKSPACE/local.properties
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
       - name: Create Gradle Wrapper
         run: |
+          # Projedeki gradlew sadece placeholder (gradle-wrapper.jar zip'e dahil
+          # değil), bu yüzden gerçek wrapper'ı burada üretiyoruz.
           gradle wrapper --gradle-version 8.9
           chmod +x gradlew
 
@@ -77,3 +90,4 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 14
           if-no-files-found: error
+          
