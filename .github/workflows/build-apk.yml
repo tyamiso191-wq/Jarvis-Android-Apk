@@ -99,7 +99,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Judi-APK
+          name: Judo-APK
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 14
           if-no-files-found: error
