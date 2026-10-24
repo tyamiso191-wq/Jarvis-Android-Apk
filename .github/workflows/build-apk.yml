@@ -24,9 +24,9 @@ jobs:
           echo "Kullanılan zip: $ZIP_FILE"
           echo "Repodaki tüm zip'ler:"; ls -la ./*.zip
           unzip -o "$ZIP_FILE"
-          if [ -d JarvisAndroid ]; then
-            cp -r JarvisAndroid/* .
-            cp -r JarvisAndroid/.[!.]* . 2>/dev/null || true
+          if [ -d JudoAndroid ]; then
+            cp -r JudoAndroid/* .
+            cp -r JudoAndroid/.[!.]* . 2>/dev/null || true
           fi
           ls -la
           test -f settings.gradle.kts && echo "OK settings" || (echo "HATA settings yok" && exit 1)
@@ -99,7 +99,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Jarvis-APK
+          name: Judi-APK
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 14
           if-no-files-found: error
